@@ -66,6 +66,7 @@ winget install --id Git.Git -e
 winget install --id Python.Python.3.11 -e
 winget install --id Astral-sh.uv -e
 winget install --id Ollama.Ollama -e
+winget install --id Microsoft.VisualStudioCode -e
 winget install --id OpenJS.NodeJS.LTS -e
 ```
 
