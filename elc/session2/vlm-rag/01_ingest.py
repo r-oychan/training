@@ -21,17 +21,16 @@ import tempfile
 from pathlib import Path
 
 import fitz  # pymupdf — used only for rendering page images
-import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import track
 from rich.table import Table
 
+from config import vlm_chat, vlm_label
+
 console = Console()
 
 # --- Config ---
-OLLAMA_BASE_URL = "http://localhost:11434"
-VLM_MODEL = "qwen3.5:4b"
 DOCS_DIR = Path(__file__).parent / "docs"
 DB_FILE = Path(__file__).parent / "rag.db"
 DPI = 150  # render resolution for page images
@@ -63,41 +62,32 @@ def render_page_to_base64(page: fitz.Page) -> str:
 
 def describe_image(image_b64: str, page_num: int) -> str:
     """Ask the VLM to describe a page image."""
-    response = requests.post(
-        f"{OLLAMA_BASE_URL}/v1/chat/completions",
-        json={
-            "model": VLM_MODEL,
-            "messages": [
+    messages = [
+        {
+            "role": "user",
+            "content": [
                 {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                f"This is page {page_num} of a document. Describe this page concisely:\n"
-                                "1. If there are diagrams or figures: state the exact title/label (e.g. 'Figure 1: ...') and briefly describe what the diagram shows.\n"
-                                "2. If there are charts or graphs: state the title, axis labels, and what trend or comparison is shown.\n"
-                                "3. If there are tables: state the title and what the columns/rows represent.\n"
-                                "4. If there are equations: write them out.\n"
-                                "5. Summarize the main text content in 2-3 sentences.\n"
-                                "Focus on extracting structured information, not narrating layout."
-                            ),
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_b64}",
-                            },
-                        },
-                    ],
+                    "type": "text",
+                    "text": (
+                        f"This is page {page_num} of a document. Describe this page concisely:\n"
+                        "1. If there are diagrams or figures: state the exact title/label (e.g. 'Figure 1: ...') and briefly describe what the diagram shows.\n"
+                        "2. If there are charts or graphs: state the title, axis labels, and what trend or comparison is shown.\n"
+                        "3. If there are tables: state the title and what the columns/rows represent.\n"
+                        "4. If there are equations: write them out.\n"
+                        "5. Summarize the main text content in 2-3 sentences.\n"
+                        "Focus on extracting structured information, not narrating layout."
+                    ),
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{image_b64}",
+                    },
                 },
             ],
-            "temperature": 0,
-            "max_completion_tokens": 512,
         },
-    )
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    ]
+    return vlm_chat(messages, max_tokens=512)
 
 
 def main():
@@ -155,7 +145,7 @@ def main():
         doc.close()
         console.print(f"  Rendered [cyan]{len(all_pages)}[/cyan] page images\n")
 
-    console.print(f"[bold]Describing pages with {VLM_MODEL}...[/bold]\n")
+    console.print(f"[bold]Describing pages with {vlm_label()}...[/bold]\n")
 
     for source, page_num, text, image_b64 in track(all_pages, description="Describing pages..."):
         description = describe_image(image_b64, page_num)

@@ -14,34 +14,23 @@ import struct
 import sys
 from pathlib import Path
 
-import requests
 import sqlite_vec
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import track
 from rich.table import Table
 
+from config import get_embedding, embed_label
+
 console = Console()
 
 # --- Config ---
-OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL = "phi3:mini"
 DB_FILE = Path(__file__).parent / "rag.db"
 
 
 def serialize_float32(vector: list[float]) -> bytes:
     """Serialize a list of floats into a compact binary format for sqlite-vec."""
     return struct.pack(f"{len(vector)}f", *vector)
-
-
-def get_embedding(text: str) -> list[float]:
-    """Get embedding vector from Ollama /api/embed endpoint."""
-    response = requests.post(
-        f"{OLLAMA_BASE_URL}/api/embed",
-        json={"model": MODEL, "input": text},
-    )
-    response.raise_for_status()
-    return response.json()["embeddings"][0]
 
 
 def main():
@@ -56,7 +45,7 @@ def main():
 
     # Read chunks from DB
     chunks = db.execute("SELECT id, text FROM chunks ORDER BY id").fetchall()
-    console.print(Panel(f"[bold]Embedding {len(chunks)} chunks using {MODEL}[/bold]"))
+    console.print(Panel(f"[bold]Embedding {len(chunks)} chunks using {embed_label()}[/bold]"))
 
     # Embed first chunk to discover dimension
     first_vec = get_embedding(chunks[0][1])

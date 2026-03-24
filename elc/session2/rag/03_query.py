@@ -15,17 +15,17 @@ import struct
 import sys
 from pathlib import Path
 
-import requests
 import sqlite_vec
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from config import get_embedding, embed_label, provider_label
+from config import chat as llm_chat
+
 console = Console()
 
 # --- Config ---
-OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL = "phi3:mini"
 DB_FILE = Path(__file__).parent / "rag.db"
 TOP_K = 3
 
@@ -33,16 +33,6 @@ TOP_K = 3
 def serialize_float32(vector: list[float]) -> bytes:
     """Serialize a list of floats into a compact binary format for sqlite-vec."""
     return struct.pack(f"{len(vector)}f", *vector)
-
-
-def get_embedding(text: str) -> list[float]:
-    """Get embedding vector from Ollama."""
-    response = requests.post(
-        f"{OLLAMA_BASE_URL}/api/embed",
-        json={"model": MODEL, "input": text},
-    )
-    response.raise_for_status()
-    return response.json()["embeddings"][0]
 
 
 def search_similar(db: sqlite3.Connection, query_vec: list[float], top_k: int) -> list[dict]:
@@ -92,19 +82,6 @@ def build_messages(question: str, context_chunks: list[dict]) -> list[dict]:
     ]
 
 
-def chat(messages: list[dict]) -> str:
-    """Send messages to Ollama and return the response."""
-    response = requests.post(
-        f"{OLLAMA_BASE_URL}/v1/chat/completions",
-        json={
-            "model": MODEL,
-            "messages": messages,
-            "temperature": 0,
-            "max_completion_tokens": 1024,
-        },
-    )
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
 
 
 def main():
@@ -121,7 +98,7 @@ def main():
     console.print(Panel(f"[bold]Question:[/bold] {question}"))
 
     # Step 1: Embed the question
-    console.print("\n[bold]1. Embedding question...[/bold]")
+    console.print(f"\n[bold]1. Embedding question ({embed_label()})...[/bold]")
     query_vec = get_embedding(question)
     console.print(f"   Vector dimension: {len(query_vec)}")
 
@@ -166,8 +143,8 @@ def main():
         ))
 
     # Step 4: Get the answer
-    console.print("\n[bold]4. LLM response:[/bold]\n")
-    answer = chat(messages)
+    console.print(f"\n[bold]4. LLM response ({provider_label()}):[/bold]\n")
+    answer = llm_chat(messages)
 
     console.print(Panel(answer, title="[bold green]Answer[/bold green]", border_style="green"))
 
