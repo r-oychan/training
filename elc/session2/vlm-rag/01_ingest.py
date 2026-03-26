@@ -3,7 +3,7 @@ Step 1: PDF → Page images + text + VLM description → SQLite
 
 For each page we store:
   - The page rendered as a base64 PNG image (what the VLM will see at query time)
-  - The extracted text via liteparse (better spatial extraction than pymupdf)
+  - The extracted text via pymupdf
   - A VLM-generated description of the page image (captures figures, tables, layout)
 
 The description + extracted text together are used for embedding in step 2.
@@ -17,8 +17,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-import fitz  # pymupdf — used only for rendering page images
-from liteparse import LiteParse
+import fitz  # pymupdf — text extraction + page image rendering
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import track
@@ -32,13 +31,6 @@ console = Console()
 DOCS_DIR = Path(__file__).parent / "docs"
 DB_FILE = Path(__file__).parent / "rag.db"
 DPI = 150  # render resolution for page images
-
-
-def extract_text_with_liteparse(pdf_path: Path) -> dict[int, str]:
-    """Extract text per page using liteparse (better spatial reading order)."""
-    parser = LiteParse()
-    result = parser.parse(str(pdf_path), ocr_enabled=False)
-    return {page.pageNum: page.text for page in result.pages if page.text.strip()}
 
 
 def render_page_to_base64(page: fitz.Page) -> str:
@@ -108,29 +100,18 @@ def main():
     all_pages = []
     for pdf_path in pdf_files:
         console.print(Panel(f"[bold]Processing:[/bold] {pdf_path.name}"))
-
-        # Extract text with liteparse (better than pymupdf for reading order)
-        console.print("  Extracting text with [cyan]liteparse[/cyan]...")
-        page_texts = extract_text_with_liteparse(pdf_path)
-        console.print(f"  Extracted text from [cyan]{len(page_texts)}[/cyan] pages")
-
-        # Render page images with pymupdf
-        console.print("  Rendering page images with [cyan]pymupdf[/cyan]...")
         doc = fitz.open(pdf_path)
 
         for page_num in range(len(doc)):
-            if (page_num + 1) not in page_texts:
+            page = doc[page_num]
+            text = page.get_text()
+            if not text.strip():
                 continue
-            image_b64 = render_page_to_base64(doc[page_num])
-            all_pages.append((
-                pdf_path.name,
-                page_num + 1,
-                page_texts[page_num + 1],
-                image_b64,
-            ))
+            image_b64 = render_page_to_base64(page)
+            all_pages.append((pdf_path.name, page_num + 1, text, image_b64))
 
         doc.close()
-        console.print(f"  Rendered [cyan]{len(all_pages)}[/cyan] page images\n")
+        console.print(f"  Extracted text + images from [cyan]{len(all_pages)}[/cyan] pages\n")
 
     console.print(f"[bold]Describing pages with {vlm_label()}...[/bold]\n")
 

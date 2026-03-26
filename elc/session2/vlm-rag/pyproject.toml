@@ -8,7 +8,6 @@ dependencies = [
     "sqlite-vec>=0.1.6",
     "requests>=2.32.0",
     "rich>=13.9.0",
-    "liteparse>=1.1.0",
 ]
 
 [tool.hatch.build.targets.wheel]
