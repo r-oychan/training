@@ -14,6 +14,7 @@ Asking a VLM to describe the page captures what text extraction cannot."
 
 import base64
 import json
+import platform
 import sqlite3
 import subprocess
 import sys
@@ -41,9 +42,11 @@ def extract_text_with_liteparse(pdf_path: Path) -> dict[int, str]:
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         out_path = f.name
 
+    # shell=True needed on Windows so subprocess can find npm .cmd wrappers (lit.cmd)
     subprocess.run(
         ["lit", "parse", str(pdf_path), "--format", "json", "--no-ocr", "-o", out_path],
         check=True, capture_output=True,
+        shell=(platform.system() == "Windows"),
     )
 
     with open(out_path) as f:
