@@ -13,15 +13,12 @@ Asking a VLM to describe the page captures what text extraction cannot."
 """
 
 import base64
-import json
-import platform
 import sqlite3
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import fitz  # pymupdf — used only for rendering page images
+from liteparse import LiteParse
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import track
@@ -39,22 +36,9 @@ DPI = 150  # render resolution for page images
 
 def extract_text_with_liteparse(pdf_path: Path) -> dict[int, str]:
     """Extract text per page using liteparse (better spatial reading order)."""
-    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-        out_path = f.name
-
-    # shell=True needed on Windows so subprocess can find npm .cmd wrappers (lit.cmd)
-    subprocess.run(
-        ["lit", "parse", str(pdf_path), "--format", "json", "--no-ocr", "-o", out_path],
-        check=True, capture_output=True,
-        shell=(platform.system() == "Windows"),
-    )
-
-    with open(out_path) as f:
-        data = json.load(f)
-
-    Path(out_path).unlink()
-
-    return {page["page"]: page["text"] for page in data["pages"] if page["text"].strip()}
+    parser = LiteParse()
+    result = parser.parse(str(pdf_path), ocr_enabled=False)
+    return {page.pageNum: page.text for page in result.pages if page.text.strip()}
 
 
 def render_page_to_base64(page: fitz.Page) -> str:

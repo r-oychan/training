@@ -17,7 +17,6 @@ Supports **local** (Ollama) or **cloud** (Azure AI Foundry) as the LLM/embedding
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) installed
-- [liteparse](https://github.com/run-llama/liteparse) installed: `npm i -g @llamaindex/liteparse`
 - **Local mode**: [Ollama](https://ollama.com) running with models pulled
 - **Azure mode**: An Azure AI Foundry project with chat, VLM, and embedding deployments
 

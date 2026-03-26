@@ -12,12 +12,6 @@ if (Test-Path $EnvFile) {
     }
 }
 
-# Check if API key is set
-if (-not $env:OPENAI_API_KEY) {
-    Write-Error "Error: OPENAI_API_KEY is not set in .env"
-    exit 1
-}
-
 # Check if prompt is provided
 if ($args.Count -eq 0) {
     Write-Host "Usage: .\chat_completion.ps1 `"your prompt here`""

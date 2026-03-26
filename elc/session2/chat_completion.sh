@@ -4,12 +4,6 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/.env"
 
-# Check if API key is set
-if [ -z "$OPENAI_API_KEY" ]; then
-  echo "Error: OPENAI_API_KEY is not set in .env"
-  exit 1
-fi
-
 # Check if prompt is provided
 if [ -z "$1" ]; then
   echo "Usage: ./chat_completion.sh \"your prompt here\""
