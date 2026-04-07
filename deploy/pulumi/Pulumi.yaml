@@ -1,0 +1,6 @@
+name: training-notebooks
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Deploy Jupyter notebooks to Azure Container Instance

@@ -1,0 +1,14 @@
+services:
+  jupyter:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8888:8888"
+      - "11434:11434"
+    volumes:
+      - ../elc/session2/rag/docs:/app/elc/session2/rag/docs
+      - ../elc/session2/vlm-rag/docs:/app/elc/session2/vlm-rag/docs
+    environment:
+      - PROVIDER=local
+      - OLLAMA_BASE_URL=http://localhost:11434
