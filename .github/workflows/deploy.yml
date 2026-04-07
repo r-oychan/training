@@ -1,0 +1,51 @@
+name: Deploy Notebooks
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "deploy/**"
+      - "elc/**"
+  workflow_dispatch:
+
+env:
+  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      notebook_url: ${{ steps.pulumi.outputs.notebook_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+        with:
+          command: version
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Pulumi Python dependencies
+        run: |
+          cd deploy/pulumi
+          pip install -r requirements.txt
+
+      - name: Pulumi Up
+        id: pulumi
+        run: |
+          cd deploy/pulumi
+          pulumi stack select dev --create
+          pulumi up --yes --stack dev
+          NOTEBOOK_URL=$(pulumi stack output notebook_url --stack dev)
+          echo "notebook_url=$NOTEBOOK_URL" >> "$GITHUB_OUTPUT"

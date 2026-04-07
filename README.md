@@ -3,10 +3,13 @@
 
 Hands-on training materials for practical AI workflows across multiple sessions.
 
-This repository currently includes **Session 2** labs for:
-- Chat completion with API calls
+This repository includes **Session 2** labs for:
+- Chat completion with API calls (seed-based reproducibility)
 - Text RAG (Retrieval-Augmented Generation)
 - Vision RAG (VLM + RAG)
+- **Interactive Jupyter notebooks** with Gradio Q&A interface
+
+Everything is designed to **run locally** using [Ollama](https://ollama.com/) — no cloud API keys required. Azure AI Foundry is supported as an optional alternative.
 
 ---
 
@@ -14,167 +17,233 @@ This repository currently includes **Session 2** labs for:
 
 ```
 elc/
-	session2/
-		chat_completion.sh
-		rag/
-			01_ingest.py
-			02_embed.py
-			03_query.py
-			docs/
-		vlm-rag/
-			01_ingest.py
-			02_embed.py
-			03_query.py
-			04_query_rerank.py
-			docs/
+    session2/
+        chat_completion.sh          # Shell script — API call demo
+        chat_completion.ps1         # PowerShell equivalent
+        rag/                        # Text RAG (Python scripts)
+            01_ingest.py
+            02_embed.py
+            03_query.py
+            docs/                   # Place PDFs here
+        vlm-rag/                    # Vision RAG (Python scripts)
+            01_ingest.py
+            02_embed.py
+            03_query.py
+            04_query_rerank.py
+            docs/                   # Place PDFs here
+        notebooks/                  # Interactive Jupyter notebooks
+            01_chat_completion_seed.ipynb
+            02_rag_pipeline.ipynb
+            03_vlm_rag_pipeline.ipynb
+            04_gradio_qa.ipynb
+deploy/                             # Docker + Azure deployment
+    Dockerfile
+    docker-compose.yml
+    requirements.txt
+    pulumi/                         # Infrastructure as Code
+        __main__.py
+        Pulumi.yaml
+        Pulumi.dev.yaml
+        requirements.txt
+.github/
+    workflows/
+        deploy.yml                  # CI/CD pipeline
 ```
 
 ---
 
-## Prerequisites
+## Quick Start (Run Locally)
 
-### Required for all tracks
-- Git
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (Python package/environment manager)
+### 1) Install prerequisites
 
-### Required for local RAG / VLM-RAG tracks
-- [Ollama](https://ollama.com/) running locally
-- Ollama model(s):
-	- `phi3:mini` (embeddings + local text model)
-	- `qwen3.5:4b` (for VLM track)
+| Tool | macOS (Homebrew) | Windows (winget) |
+|------|-----------------|-------------------|
+| Git | `brew install git` | `winget install Git.Git` |
+| Python 3.11+ | `brew install python@3.11` | `winget install Python.Python.3.11` |
+| uv | `brew install uv` | `winget install Astral-sh.uv` |
+| Ollama | `brew install ollama` | `winget install Ollama.Ollama` |
+| Node.js (VLM only) | `brew install node` | `winget install OpenJS.NodeJS.LTS` |
 
-### Required for VLM-RAG only
-- Node.js + npm
-- [liteparse CLI](https://github.com/run-llama/liteparse): `npm i -g @llamaindex/liteparse`
+### 2) Clone and enter the repo
 
----
-
-## Installation Guide
-
-### 1) Install core tools
-
-#### macOS (Homebrew)
-```bash
-brew update
-brew install git python@3.11 uv ollama node
-```
-
-#### Windows 11 (winget, PowerShell)
-```powershell
-winget install --id Git.Git -e
-winget install --id Python.Python.3.11 -e
-winget install --id Astral-sh.uv -e
-winget install --id Ollama.Ollama -e
-winget install --id Microsoft.VisualStudioCode -e
-winget install --id OpenJS.NodeJS.LTS -e
-```
-
-### 2) Clone the repository
 ```bash
 git clone <YOUR_REPO_URL>
 cd training
 ```
 
-### 3) Pull required Ollama models
+### 3) Start Ollama and pull models
+
 ```bash
-ollama pull phi3:mini
-ollama pull qwen3.5:4b
+# Start Ollama (if not already running)
+ollama serve &
+
+# Pull required models
+ollama pull phi3:mini        # embeddings + text chat
+ollama pull qwen3.5:4b       # vision model (VLM track)
 ```
 
-### 4) Install liteparse (VLM-RAG track)
+### 4) Choose your path
+
+#### Option A: Jupyter Notebooks (recommended for learning)
+
 ```bash
-npm i -g @llamaindex/liteparse
+# Install JupyterLab
+pip install jupyterlab
+
+# Launch notebooks
+cd elc/session2/notebooks
+jupyter lab
 ```
 
-### 5) Sync Python dependencies per lab
+Open the notebooks in order:
+1. `01_chat_completion_seed.ipynb` — seed-based reproducibility
+2. `02_rag_pipeline.ipynb` — text RAG end-to-end
+3. `03_vlm_rag_pipeline.ipynb` — vision RAG end-to-end
+4. `04_gradio_qa.ipynb` — interactive Gradio Q&A UI
 
-For text RAG:
+Each notebook installs its own dependencies with `%pip install`.
+
+#### Option B: Python Scripts (CLI)
+
 ```bash
+# Text RAG
 cd elc/session2/rag
+cp .env.sample .env          # defaults to local Ollama
 uv sync
-```
+uv run python 01_ingest.py
+uv run python 02_embed.py
+uv run python 03_query.py "What is attention?"
 
-For VLM-RAG:
-```bash
+# VLM RAG
 cd elc/session2/vlm-rag
+cp .env.sample .env
 uv sync
+uv run python 01_ingest.py
+uv run python 02_embed.py
+uv run python 03_query.py "Summarize the key chart"
 ```
 
----
+#### Option C: Chat Completion Script
 
-## Session 2 Labs
-
-### A) Chat Completion API Script
-Location: `elc/session2/chat_completion.sh`
-
-1. Create a `.env` file in `elc/session2/`:
-```bash
-OPENAI_API_KEY=your_api_key_here
-# Optional overrides:
-# OPENAI_ENDPOINT=https://api.openai.com/v1/chat/completions
-# OPENAI_MODEL=gpt-4.1
-# OPENAI_SEED=42
-# OPENAI_TEMPERATURE=0
-```
-
-2. Run:
 ```bash
 cd elc/session2
+# Create .env with your OpenAI API key:
+echo 'OPENAI_API_KEY=your_key' > .env
 chmod +x chat_completion.sh
 ./chat_completion.sh "Explain RAG in 3 bullet points"
 ```
 
 ---
 
-### B) Local Text RAG (Ollama + SQLite)
-Location: `elc/session2/rag`
+## Don't Want to Run Locally?
 
-1. Add a PDF to `elc/session2/rag/docs/`
-2. Run pipeline:
+We provide a Docker image that bundles Ollama + JupyterLab + all notebooks. You can either:
+
+### Run with Docker locally
+
 ```bash
-cd elc/session2/rag
-uv run python 01_ingest.py
-uv run python 02_embed.py
-uv run python 03_query.py "What is attention?"
+docker compose -f deploy/docker-compose.yml up --build
+# Open http://localhost:8888
 ```
+
+### Deploy to Azure
+
+The `deploy/` folder contains everything to deploy to Azure Container Instances:
+
+1. **Infrastructure**: Pulumi IaC in `deploy/pulumi/`
+2. **CI/CD**: GitHub Actions in `.github/workflows/deploy.yml`
+
+See [deploy/README.md](#deployment) below for details.
 
 ---
 
-### C) VLM-RAG (Vision + Retrieval)
-Location: `elc/session2/vlm-rag`
+## Session 2 Labs
 
-1. Add a PDF to `elc/session2/vlm-rag/docs/`
-2. Run pipeline:
-```bash
-cd elc/session2/vlm-rag
-uv run python 01_ingest.py
-uv run python 02_embed.py
-uv run python 03_query.py "Summarize the key chart on unemployment ratio"
-```
+### A) Chat Completion with Seed Control
 
-Optional reranking flow (if your lab uses it):
-```bash
-uv run python 04_query_rerank.py "Your question"
-```
+Demonstrates how `seed` + `temperature=0` produces deterministic outputs.
+
+- **Script**: `elc/session2/chat_completion.sh` (Bash) / `.ps1` (PowerShell)
+- **Notebook**: `elc/session2/notebooks/01_chat_completion_seed.ipynb`
+
+### B) Text RAG (Ollama + SQLite)
+
+Full RAG pipeline: PDF → chunks → embeddings → vector search → LLM answer.
+
+- **Scripts**: `elc/session2/rag/01_ingest.py` → `02_embed.py` → `03_query.py`
+- **Notebook**: `elc/session2/notebooks/02_rag_pipeline.ipynb`
+
+### C) VLM RAG (Vision + Retrieval)
+
+Vision-aware RAG: page images → VLM descriptions → dual embeddings → reranking → VLM answer.
+
+- **Scripts**: `elc/session2/vlm-rag/01_ingest.py` → `02_embed.py` → `03_query.py` → `04_query_rerank.py`
+- **Notebook**: `elc/session2/notebooks/03_vlm_rag_pipeline.ipynb`
+
+### D) Interactive Gradio Q&A
+
+Web interface to query both Text RAG and VLM RAG pipelines interactively.
+
+- **Notebook**: `elc/session2/notebooks/04_gradio_qa.ipynb`
+- Launches a local Gradio app with tabs for Text RAG and VLM RAG
 
 ---
 
-## Suggested Training Flow
+## Deployment
 
-1. Start with `chat_completion.sh` for API fundamentals.
-2. Move to `rag/` for text-based retrieval.
-3. Finish with `vlm-rag/` to handle visual-heavy documents (tables/charts/diagrams).
+### Docker
+
+```bash
+# Build and run (includes Ollama + JupyterLab)
+docker compose -f deploy/docker-compose.yml up --build
+
+# Access at http://localhost:8888
+```
+
+### Azure (Pulumi + GitHub Actions)
+
+Prerequisites:
+- [Pulumi CLI](https://www.pulumi.com/docs/install/) installed
+- Azure subscription with contributor access
+- GitHub repository secrets configured:
+  - `AZURE_CREDENTIALS` — Azure service principal JSON
+  - `PULUMI_ACCESS_TOKEN` — Pulumi access token
+
+Manual deployment:
+```bash
+cd deploy/pulumi
+pip install -r requirements.txt
+pulumi stack init dev
+pulumi up
+```
+
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) triggers automatically on pushes to `main` that modify `deploy/` or `elc/`.
+
+---
+
+## Configuration
+
+All labs default to **local Ollama** (`PROVIDER=local`). To use Azure AI Foundry instead:
+
+1. Copy `.env.sample` to `.env` in the relevant lab folder
+2. Set `PROVIDER=azure`
+3. Fill in your Azure endpoint URLs and API key
+
+See `.env.sample` in each lab folder for all available options.
 
 ---
 
 ## Troubleshooting
 
-- If `ollama` commands fail, start Ollama app/service first.
-- If `uv` is not found, restart terminal after installation.
-- If Python version is too old, ensure `python --version` is 3.11+.
-- If `liteparse` is not found, verify npm global bin is on your PATH.
-- If `chat_completion.sh` fails, confirm `.env` exists and `OPENAI_API_KEY` is set.
+| Problem | Fix |
+|---------|-----|
+| `ollama` commands fail | Start Ollama: `ollama serve` or open the Ollama app |
+| `uv` not found | Restart terminal after installing uv |
+| Python version too old | Ensure `python --version` shows 3.11+ |
+| Notebook kernel not found | Run `pip install ipykernel` and restart JupyterLab |
+| Gradio app won't launch | Ensure port 7860 is free, or set `demo.launch(server_port=7861)` |
+| Docker build fails | Ensure Docker Desktop is running and has at least 8GB RAM allocated |
+| `rag.db not found` in Gradio | Run the ingest + embed steps first (notebooks 02/03 or the scripts) |
 
 ---
 
@@ -182,3 +251,4 @@ uv run python 04_query_rerank.py "Your question"
 
 - Each lab folder has its own focused README with deeper implementation details.
 - Keep PDFs small during training runs for faster ingestion and query cycles.
+- The notebooks create separate `.db` files (e.g., `rag_notebook.db`) to avoid conflicts with the CLI scripts.

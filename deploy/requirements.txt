@@ -1,0 +1,6 @@
+pymupdf
+sqlite-vec
+requests
+rich
+gradio
+jupyterlab

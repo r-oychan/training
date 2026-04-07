@@ -1,2 +1,8 @@
 .env
 *.db
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+node_modules/
+.pulumi/
+venv/
