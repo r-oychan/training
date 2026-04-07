@@ -33,9 +33,8 @@ elc/
             docs/                   # Place PDFs here
         notebooks/                  # Interactive Jupyter notebooks
             01_chat_completion_seed.ipynb
-            02_rag_pipeline.ipynb
-            03_vlm_rag_pipeline.ipynb
-            04_gradio_qa.ipynb
+            02_rag_pipeline.ipynb        # includes Gradio Q&A
+            03_vlm_rag_pipeline.ipynb    # includes Gradio Q&A
 deploy/                             # Docker + Azure deployment
     Dockerfile
     docker-compose.yml
@@ -97,9 +96,8 @@ jupyter lab
 
 Open the notebooks in order:
 1. `01_chat_completion_seed.ipynb` — seed-based reproducibility
-2. `02_rag_pipeline.ipynb` — text RAG end-to-end
-3. `03_vlm_rag_pipeline.ipynb` — vision RAG end-to-end
-4. `04_gradio_qa.ipynb` — interactive Gradio Q&A UI
+2. `02_rag_pipeline.ipynb` — text RAG end-to-end + Gradio Q&A
+3. `03_vlm_rag_pipeline.ipynb` — vision RAG end-to-end + Gradio Q&A
 
 Each notebook installs its own dependencies with `%pip install`.
 
@@ -180,12 +178,7 @@ Vision-aware RAG: page images → VLM descriptions → dual embeddings → reran
 - **Scripts**: `elc/session2/vlm-rag/01_ingest.py` → `02_embed.py` → `03_query.py` → `04_query_rerank.py`
 - **Notebook**: `elc/session2/notebooks/03_vlm_rag_pipeline.ipynb`
 
-### D) Interactive Gradio Q&A
-
-Web interface to query both Text RAG and VLM RAG pipelines interactively.
-
-- **Notebook**: `elc/session2/notebooks/04_gradio_qa.ipynb`
-- Launches a local Gradio app with tabs for Text RAG and VLM RAG
+Each RAG notebook includes a **Gradio Q&A** section at the end that launches an interactive web interface for querying your documents.
 
 ---
 
