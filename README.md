@@ -86,12 +86,9 @@ ollama pull qwen3.5:4b       # vision model (VLM track)
 #### Option A: Jupyter Notebooks (recommended for learning)
 
 ```bash
-# Install JupyterLab
-pip install jupyterlab
-
-# Launch notebooks
 cd elc/session2/notebooks
-jupyter lab
+uv sync                    # creates .venv with all dependencies (including JupyterLab)
+uv run jupyter lab         # launch JupyterLab using the managed venv
 ```
 
 Open the notebooks in order:
@@ -99,7 +96,7 @@ Open the notebooks in order:
 2. `02_rag_pipeline.ipynb` — text RAG end-to-end + Gradio Q&A
 3. `03_vlm_rag_pipeline.ipynb` — vision RAG end-to-end + Gradio Q&A
 
-Each notebook installs its own dependencies with `%pip install`.
+Dependencies are managed by `uv` via `pyproject.toml` — no manual `pip install` needed.
 
 #### Option B: Python Scripts (CLI)
 
