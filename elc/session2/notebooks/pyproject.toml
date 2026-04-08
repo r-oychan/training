@@ -1,0 +1,17 @@
+[project]
+name = "training-notebooks"
+version = "0.1.0"
+description = "Interactive Jupyter notebooks for RAG training demos"
+requires-python = ">=3.11"
+dependencies = [
+    "pymupdf>=1.25.0",
+    "sqlite-vec>=0.1.6",
+    "requests>=2.32.0",
+    "rich>=13.9.0",
+    "gradio>=5.0.0",
+    "jupyterlab>=4.0.0",
+    "ipykernel>=6.29.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = []
