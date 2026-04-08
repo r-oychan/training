@@ -87,6 +87,7 @@ ollama pull qwen3.5:4b       # vision model (VLM track)
 
 ```bash
 cd elc/session2/notebooks
+cp .env.sample .env        # configure provider (defaults to local Ollama)
 uv sync                    # creates .venv with all dependencies (including JupyterLab)
 uv run jupyter lab         # launch JupyterLab using the managed venv
 ```
